@@ -1,0 +1,72 @@
+---
+description: React and component conventions for BookmarkHub
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Component Conventions
+
+## Server vs Client
+
+```typescript
+// Default: Server Component — no directive needed
+export default async function BookmarksPage() {
+  const supabase = await createClient()
+  const { data } = await supabase.from('bookmarks').select('*')
+  return <BookmarkGrid bookmarks={data} />
+}
+
+// Client Component — only when using hooks/events/browser APIs
+'use client'
+export function AddBookmarkDialog() { ... }
+```
+
+## shadcn/ui First
+
+Always reach for shadcn components before writing custom ones:
+
+```typescript
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader } from '@/components//ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+```
+
+## Loading States (React 19)
+
+Prefer `useActionState` for form submissions (React 19, replaces `useFormState`):
+
+```typescript
+'use client'
+import { useActionState } from 'react'
+
+const [state, action, isPending] = useActionState(serverAction, null)
+
+<form action={action}>
+  <Button type="submit" disabled={isPending}>
+    {isPending ? <Spinner /> : 'Save'}
+  </Button>
+</form>
+```
+
+For non-form async actions, use `useTransition`:
+
+```typescript
+const [isPending, startTransition] = useTransition()
+
+startTransition(async () => { await doWork() })
+
+<Button disabled={isPending} onClick={() => startTransition(async () => await doWork())}>
+  {isPending ? <Spinner /> : 'Save'}
+</Button>
+```
+
+## cn() Utility
+
+Use `cn()` from `lib/utils.ts` for conditional classes:
+
+```typescript
+import { cn } from '@/lib/utils'
+<div className={cn('base-class', condition && 'conditional-class')} />
+```

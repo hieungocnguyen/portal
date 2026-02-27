@@ -1,0 +1,65 @@
+---
+description: Supabase usage patterns for BookmarkHub
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Supabase Patterns (`@supabase/supabase-js` ^2.98, `@supabase/ssr` ^0.8)
+
+## Client Selection
+
+```typescript
+// Server Component or Route Handler
+import { createClient } from '@/lib/supabase/server'
+const supabase = await createClient()
+
+// Client Component
+import { createClient } from '@/lib/supabase/client'
+const supabase = createClient()
+```
+
+## Always Handle Errors
+
+```typescript
+// ❌ BAD
+const { data } = await supabase.from('bookmarks').select('*')
+
+// ✅ GOOD
+const { data, error } = await supabase.from('bookmarks').select('*')
+if (error) throw new Error(error.message)
+```
+
+## Auth in Server Components
+
+```typescript
+const { data: { user } } = await supabase.auth.getUser()
+if (!user) redirect('/login')
+```
+
+## Bookmark Queries
+
+```typescript
+// All user bookmarks newest first
+supabase
+  .from('bookmarks')
+  .select('*, collections(name)')
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false })
+
+// Filter by tag
+supabase
+  .from('bookmarks')
+  .select('*')
+  .contains('tags', [tag])
+```
+
+## Collection with Slug (public page)
+
+```typescript
+supabase
+  .from('collections')
+  .select('*, bookmarks(*)')
+  .eq('slug', slug)
+  .eq('is_public', true)
+  .single()
+```

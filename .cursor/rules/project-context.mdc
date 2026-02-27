@@ -1,0 +1,36 @@
+---
+description: BookmarkHub project overview and build instructions for AI agents
+alwaysApply: true
+---
+
+# BookmarkHub — Project Context
+
+This is a bookmark manager web app + Chrome Extension. Read `AGENTS.md` at the repo root for the full build guide before making any changes.
+
+## Stack
+- **Next.js 16 App Router** — Server Components by default, `'use client'` only when needed; Turbopack dev
+- **React 19** — use `useActionState` (not `useFormState`), `use()` hook
+- **Supabase** — `@supabase/supabase-js` 2.x + `@supabase/ssr` 0.8.x — Auth (email + Google OAuth), Postgres, RLS
+- **Tailwind CSS v4** — CSS-based config (`@import "tailwindcss"` in globals.css); no tailwind.config.js
+- **shadcn/ui v3** — built for Tailwind v4; use `sonner` for toasts (not `toast`)
+- **TypeScript 5.9** — strict mode; no `any`
+- **Chrome Extension (MV3)** — lives in `/extension/`
+
+## Key Rules
+- All TypeScript types live in `lib/types.ts` — never use `any`
+- Supabase browser client: `lib/supabase/client.ts` — use in Client Components
+- Supabase server client: `lib/supabase/server.ts` — use in Server Components and Route Handlers
+- Always destructure `{ data, error }` from Supabase calls and handle `error`
+- Every async action needs a loading state — use `isPending` from `useActionState` or `useTransition`
+- Use `nanoid(8)` to generate public collection slugs
+- **Next.js 15+ breaking**: `params` and `searchParams` in page components are `Promise` — always `await` them
+- **Tailwind v4**: no `tailwind.config.js`; customize via `@theme {}` in `globals.css`
+- **shadcn v3**: toast notifications use `sonner` — `import { toast } from 'sonner'`
+
+## Build Order
+Phase 1 → Core web app (auth, bookmarks, collections, search)
+Phase 2 → Public sharing via `/share/[slug]`
+Phase 3 → Chrome Extension
+Phase 4 → Browser bookmark import
+
+See `AGENTS.md` for detailed steps, SQL schema, and code snippets.
