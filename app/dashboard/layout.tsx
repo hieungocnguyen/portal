@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
-import type { Collection, Profile } from '@/lib/types'
+import type { Collection, Folder, Profile } from '@/lib/types'
 
 export default async function DashboardLayout({
   children,
@@ -18,19 +18,28 @@ export default async function DashboardLayout({
     redirect('/auth/signin')
   }
 
-  const [{ data: collections }, { data: profile }, { data: bookmarks }] =
-    await Promise.all([
-      supabase
-        .from('collections')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase
-        .from('bookmarks')
-        .select('collection_id, tags')
-        .eq('user_id', user.id),
-    ])
+  const [
+    { data: collections },
+    { data: folders },
+    { data: profile },
+    { data: bookmarks },
+  ] = await Promise.all([
+    supabase
+      .from('collections')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('folders')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true }),
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase
+      .from('bookmarks')
+      .select('collection_id, tags')
+      .eq('user_id', user.id),
+  ])
 
   // Build tags per collection for nested sidebar items
   const tagsByCollection: Record<string, string[]> = {}
@@ -59,6 +68,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f0f0f]">
       <Sidebar
+        folders={(folders as Folder[]) || []}
         collections={(collections as Collection[]) || []}
         tagsByCollection={tagsByCollection}
         userEmail={user.email || ''}

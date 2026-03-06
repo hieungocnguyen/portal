@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { DashboardPageClient } from '@/components/bookmarks/DashboardPageClient'
-import type { Bookmark, Collection } from '@/lib/types'
+import type { Bookmark, Collection, Folder } from '@/lib/types'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -26,10 +26,17 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
+  const { data: folders } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
+
   return (
     <DashboardPageClient
       initialBookmarks={(bookmarks as Bookmark[]) || []}
       collections={(collections as Collection[]) || []}
+      folders={(folders as Folder[]) || []}
     />
   )
 }

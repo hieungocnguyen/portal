@@ -1,3 +1,10 @@
+export type Folder = {
+  id: string
+  user_id: string
+  name: string
+  created_at: string
+}
+
 export type Collection = {
   id: string
   user_id: string
@@ -5,6 +12,7 @@ export type Collection = {
   description: string | null
   is_public: boolean
   slug: string | null
+  folder_id: string | null
   created_at: string
 }
 

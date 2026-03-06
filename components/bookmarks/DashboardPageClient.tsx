@@ -6,17 +6,19 @@ import { BookmarkGrid } from '@/components/bookmarks/BookmarkGrid'
 import { AddBookmarkDialog } from '@/components/bookmarks/AddBookmarkDialog'
 import { Header } from '@/components/layout/Header'
 import { createClient } from '@/utils/supabase/client'
-import type { Bookmark, Collection } from '@/lib/types'
+import type { Bookmark, Collection, Folder } from '@/lib/types'
 import { toast } from 'sonner'
 
 type DashboardPageClientProps = {
   initialBookmarks: Bookmark[]
   collections: Collection[]
+  folders: Folder[]
 }
 
 export function DashboardPageClient({ 
   initialBookmarks, 
-  collections 
+  collections,
+  folders
 }: DashboardPageClientProps) {
   const [bookmarks, setBookmarks] = useState(initialBookmarks)
   const [searchQuery, setSearchQuery] = useState('')
@@ -135,6 +137,7 @@ export function DashboardPageClient({
       </div>
 
       <AddBookmarkDialog 
+        folders={folders}
         collections={collections} 
         onAdd={handleAddBookmark}
         open={showAddDialog}
