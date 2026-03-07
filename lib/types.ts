@@ -2,6 +2,7 @@ export type Folder = {
   id: string
   user_id: string
   name: string
+  slug: string
   created_at: string
 }
 
@@ -11,7 +12,7 @@ export type Collection = {
   name: string
   description: string | null
   is_public: boolean
-  slug: string | null
+  slug: string
   folder_id: string | null
   created_at: string
 }

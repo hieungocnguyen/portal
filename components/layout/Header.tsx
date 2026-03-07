@@ -47,9 +47,9 @@ export function Header({
         {/* Right side controls */}
         <div className="flex items-center gap-3">
           {/* Search Bar */}
-          <div className="flex-1 max-w-md">
+          {/* <div className="flex-1 max-w-md">
             <SearchBar onSearch={onSearch} />
-          </div>
+          </div> */}
 
           {/* NEW button */}
           <Button

@@ -13,7 +13,6 @@ import {
   LogOutIcon,
   UserIcon,
   BookmarkIcon,
-  LayersIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -53,20 +52,29 @@ export function Sidebar({
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const activeCollectionId = pathname.startsWith('/dashboard/collections/')
+  const activeCollectionSlug = pathname.startsWith('/dashboard/collections/')
+    ? pathname.split('/')[3]
+    : null
+  const activeFolderSlug = pathname.startsWith('/dashboard/folders/')
     ? pathname.split('/')[3]
     : null
   const activeTag = searchParams.get('tag')
 
+  const activeCollection = activeCollectionSlug
+    ? collections.find((c) => c.slug === activeCollectionSlug)
+    : null
+
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(() => {
-    if (!activeCollectionId) return new Set<string>()
-    const activeCollection = collections.find((c) => c.id === activeCollectionId)
+    if (activeFolderSlug) {
+      const activeFolder = folders.find((f) => f.slug === activeFolderSlug)
+      if (activeFolder) return new Set([activeFolder.id])
+    }
     if (activeCollection?.folder_id) return new Set([activeCollection.folder_id])
     return new Set<string>()
   })
 
   const [expandedCollectionIds, setExpandedCollectionIds] = useState<Set<string>>(() => {
-    if (activeCollectionId) return new Set([activeCollectionId])
+    if (activeCollection) return new Set([activeCollection.id])
     return new Set<string>()
   })
 
@@ -122,9 +130,9 @@ export function Sidebar({
   const initials = displayName.slice(0, 2).toUpperCase()
 
   const renderCollection = (collection: Collection) => {
-    const collectionPath = `/dashboard/collections/${collection.id}`
+    const collectionPath = `/dashboard/collections/${collection.slug}`
     const isExpanded = expandedCollectionIds.has(collection.id)
-    const isCollectionActive = pathname === collectionPath && !activeTag
+    const isCollectionActive = activeCollectionSlug === collection.slug && !activeTag
     const tags = tagsByCollection[collection.id] || []
     const hasTags = tags.length > 0
 
@@ -164,7 +172,7 @@ export function Sidebar({
             {tags.slice(0, 5).map((tag) => {
               const tagPath = `${collectionPath}?tag=${encodeURIComponent(tag)}`
               const isTagActive =
-                activeCollectionId === collection.id && activeTag === tag
+                activeCollectionSlug === collection.slug && activeTag === tag
               return (
                 <Link key={tag} href={tagPath}>
                   <div
@@ -288,9 +296,7 @@ export function Sidebar({
             {folders.map((folder) => {
               const isFolderExpanded = expandedFolderIds.has(folder.id)
               const folderCollections = collectionsByFolder.byFolder[folder.id] || []
-              const folderCollectionIds = new Set(folderCollections.map((c) => c.id))
-              const isFolderActive =
-                activeCollectionId !== null && folderCollectionIds.has(activeCollectionId) && !activeTag
+              const isFolderActive = activeFolderSlug === folder.slug
 
               return (
                 <div key={folder.id}>
@@ -307,22 +313,13 @@ export function Sidebar({
                       )}
                     </button>
                     <Link
-                      href={
-                        folderCollections.length === 1
-                          ? `/dashboard/collections/${folderCollections[0].id}`
-                          : `/dashboard/collections/${folderCollections[0]?.id || ''}`
-                      }
-                      onClick={(e) => {
-                        if (folderCollections.length === 0) {
-                          e.preventDefault()
-                        }
-                      }}
+                      href={`/dashboard/folders/${folder.slug}`}
                       className="flex-1 min-w-0"
                     >
                       <div
                         className={cn(
                           'flex items-center gap-2 px-2 py-2 text-sm transition-colors',
-                          isFolderActive && !isFolderExpanded
+                          isFolderActive
                             ? 'bg-[#1e3a5f]/60 text-[#60a5fa]'
                             : 'text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-[#e5e5e5]'
                         )}

@@ -9,17 +9,30 @@ import { createClient } from '@/utils/supabase/client'
 import type { Bookmark, Collection, Folder } from '@/lib/types'
 import { toast } from 'sonner'
 
-type DashboardPageClientProps = {
+type Breadcrumb = {
+  label: string
+  href?: string
+}
+
+type BookmarkPageClientProps = {
+  title: string
+  subtitle: string
+  breadcrumbs: Breadcrumb[]
   initialBookmarks: Bookmark[]
   collections: Collection[]
   folders: Folder[]
+  activeTag?: string
 }
 
-export function DashboardPageClient({
+export function BookmarkPageClient({
+  title,
+  subtitle,
+  breadcrumbs,
   initialBookmarks,
   collections,
-  folders
-}: DashboardPageClientProps) {
+  folders,
+  activeTag,
+}: BookmarkPageClientProps) {
   const [bookmarks, setBookmarks] = useState(initialBookmarks)
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -27,17 +40,23 @@ export function DashboardPageClient({
   const supabase = createClient()
 
   const filteredBookmarks = useMemo(() => {
-    if (!searchQuery) return bookmarks
+    let filtered = bookmarks
+
+    if (activeTag) {
+      filtered = filtered.filter((b) => b.tags.includes(activeTag))
+    }
+
+    if (!searchQuery) return filtered
 
     const query = searchQuery.toLowerCase()
-    return bookmarks.filter((bookmark) => {
+    return filtered.filter((bookmark) => {
       const titleMatch = bookmark.title?.toLowerCase().includes(query)
       const urlMatch = bookmark.url.toLowerCase().includes(query)
       const descMatch = bookmark.description?.toLowerCase().includes(query)
       const tagMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query))
       return titleMatch || urlMatch || descMatch || tagMatch
     })
-  }, [bookmarks, searchQuery])
+  }, [bookmarks, searchQuery, activeTag])
 
   const handleAddBookmark = async (data: {
     url: string
@@ -104,7 +123,7 @@ export function DashboardPageClient({
   return (
     <div className="flex flex-col h-full">
       <Header
-        breadcrumbs={[]}
+        breadcrumbs={breadcrumbs}
         onSearch={setSearchQuery}
         onNewClick={() => setShowAddDialog(true)}
       />
@@ -112,10 +131,10 @@ export function DashboardPageClient({
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#e5e5e5] tracking-tight mb-1">ALL BOOKMARKS</h1>
-            <p className="text-sm text-[#606060]">
-              All your bookmarks in one place.
-            </p>
+            <h1 className="text-2xl font-bold text-[#e5e5e5] tracking-tight mb-1">
+              {title}
+            </h1>
+            <p className="text-sm text-[#606060]">{subtitle}</p>
           </div>
           <div className="">
             <div className="text-sm text-[#606060] font-medium mt-1">

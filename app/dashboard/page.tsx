@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { DashboardPageClient } from '@/components/bookmarks/DashboardPageClient'
+import { BookmarkPageClient } from '@/components/bookmarks/BookmarkPageClient'
 import type { Bookmark, Collection, Folder } from '@/lib/types'
 
 export default async function DashboardPage() {
@@ -33,10 +33,13 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: true })
 
   return (
-    <DashboardPageClient
+    <BookmarkPageClient
       initialBookmarks={(bookmarks as Bookmark[]) || []}
       collections={(collections as Collection[]) || []}
       folders={(folders as Folder[]) || []}
+      title="ALL BOOKMARKS"
+      subtitle="All your bookmarks in one place."
+      breadcrumbs={[{ label: 'ALL BOOKMARKS' }]}
     />
   )
 }

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreVerticalIcon, TrashIcon, EditIcon, FolderIcon } from 'lucide-react'
+import { MoreVerticalIcon, TrashIcon, EditIcon, FolderIcon, ExternalLinkIcon } from 'lucide-react'
 import type { Bookmark, Collection } from '@/lib/types'
 import Image from 'next/image'
 
@@ -27,7 +27,7 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
   const categoryLabel = collection?.name.toUpperCase() || 'GENERAL'
 
   return (
-    <div className="group relative bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#3a3a3a] transition-all">
+    <div className="group flex flex-col relative bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#3a3a3a] transition-all">
       <a
         href={bookmark.url}
         target="_blank"
@@ -82,7 +82,7 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
                 {onEdit && (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={(e) => {
                       e.preventDefault()
                       onEdit(bookmark)
@@ -117,42 +117,45 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
       </a>
 
       {/* Content section */}
-      <div className="p-4 space-y-3">
-        {/* Title with favicon */}
-        <div className="flex items-start gap-2">
-          {bookmark.favicon_url && (
-            <div className="shrink-0 mt-0.5">
-              <Image
-                src={bookmark.favicon_url}
-                alt={domain}
-                width={16}
-                height={16}
-                className="object-contain"
-                unoptimized
-              />
+      <div className="p-4 grow flex flex-col justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          {/* Title with favicon */}
+          <div className="flex items-start gap-2">
+            {bookmark.favicon_url && (
+              <div className="shrink-0 mt-0.5">
+                <Image
+                  src={bookmark.favicon_url}
+                  alt={domain}
+                  width={16}
+                  height={16}
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-[#e5e5e5] text-sm line-clamp-2 leading-tight">
+                {bookmark.title || bookmark.url}
+              </h3>
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-[#e5e5e5] text-sm line-clamp-2 leading-tight">
-              {bookmark.title || bookmark.url}
-            </h3>
           </div>
-        </div>
 
-        {/* Description */}
-        {bookmark.description && (
-          <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed">
-            {bookmark.description}
-          </p>
-        )}
+          {/* Description */}
+          {bookmark.description && (
+            <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed">
+              {bookmark.description}
+            </p>
+          )}
+        </div>
 
         {/* Domain link */}
-        <div className="flex items-center gap-1 text-[10px] text-[#606060]">
+        <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-1 text-[10px] text-[#606060] hover:underline border-t border-[#2a2a2a] pt-3">
           <span>{domain}</span>
-        </div>
+          <ExternalLinkIcon className="h-4 w-4" />
+        </a>
 
         {/* Tags */}
-        {bookmark.tags.length > 0 && (
+        {/* {bookmark.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {bookmark.tags.slice(0, 4).map((tag) => (
               <Badge 
@@ -172,7 +175,7 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
               </Badge>
             )}
           </div>
-        )}
+        )} */}
       </div>
     </div>
   )

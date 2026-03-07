@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/utils/supabase/client'
+import { slugify } from '@/lib/utils'
+import { nanoid } from 'nanoid'
 import { toast } from 'sonner'
 
 type CreateCollectionDialogProps = {
@@ -46,11 +48,20 @@ export function CreateCollectionDialog({
         return
       }
 
+      let slug = slugify(name.trim())
+      const { data: existing } = await supabase
+        .from('collections')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle()
+      if (existing) slug = `${slug}-${nanoid(4)}`
+
       const { error } = await supabase.from('collections').insert({
         user_id: user.id,
         name: name.trim(),
         description: description.trim() || null,
         folder_id: folderId,
+        slug,
       })
 
       if (error) {

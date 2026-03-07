@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/utils/supabase/client'
+import { slugify } from '@/lib/utils'
+import { nanoid } from 'nanoid'
 import { toast } from 'sonner'
 
 type CreateFolderDialogProps = {
@@ -40,9 +42,17 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
         return
       }
 
+      let slug = slugify(name.trim())
+      const { data: existing } = await supabase
+        .from('folders')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle()
+      if (existing) slug = `${slug}-${nanoid(4)}`
+
       const { error } = await supabase
         .from('folders')
-        .insert({ user_id: user.id, name: name.trim() })
+        .insert({ user_id: user.id, name: name.trim(), slug })
 
       if (error) {
         toast.error('Failed to create folder')
