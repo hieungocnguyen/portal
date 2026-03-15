@@ -34,8 +34,7 @@ export function DashboardPageClient({
       const titleMatch = bookmark.title?.toLowerCase().includes(query)
       const urlMatch = bookmark.url.toLowerCase().includes(query)
       const descMatch = bookmark.description?.toLowerCase().includes(query)
-      const tagMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query))
-      return titleMatch || urlMatch || descMatch || tagMatch
+      return titleMatch || urlMatch || descMatch
     })
   }, [bookmarks, searchQuery])
 
@@ -44,9 +43,7 @@ export function DashboardPageClient({
     title: string
     description: string
     collection_id: string | null
-    tags: string[]
     favicon_url: string | null
-    og_image: string | null
   }) => {
     const {
       data: { user },
@@ -65,9 +62,7 @@ export function DashboardPageClient({
         title: data.title || null,
         description: data.description || null,
         collection_id: data.collection_id,
-        tags: data.tags,
         favicon_url: data.favicon_url,
-        og_image: data.og_image,
       })
       .select()
       .single()

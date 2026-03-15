@@ -25,8 +25,6 @@ export type Bookmark = {
   title: string | null
   description: string | null
   favicon_url: string | null
-  og_image: string | null
-  tags: string[]
   created_at: string
 }
 
@@ -34,7 +32,6 @@ export type UrlMeta = {
   title: string | null
   description: string | null
   favicon_url: string | null
-  og_image: string | null
 }
 
 export type BookmarkWithCollection = Bookmark & {

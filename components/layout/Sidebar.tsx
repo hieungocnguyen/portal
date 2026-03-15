@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   ChevronDown,
   ChevronRight,
@@ -33,7 +33,6 @@ import type { Collection, Folder } from '@/lib/types'
 type SidebarProps = {
   folders: Folder[]
   collections: Collection[]
-  tagsByCollection?: Record<string, string[]>
   userEmail: string
   avatarUrl?: string | null
   fullName?: string | null
@@ -42,14 +41,12 @@ type SidebarProps = {
 export function Sidebar({
   folders,
   collections,
-  tagsByCollection = {},
   userEmail,
   avatarUrl,
   fullName,
 }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const activeCollectionSlug = pathname.startsWith('/dashboard/collections/')
@@ -58,7 +55,6 @@ export function Sidebar({
   const activeFolderSlug = pathname.startsWith('/dashboard/folders/')
     ? pathname.split('/')[3]
     : null
-  const activeTag = searchParams.get('tag')
 
   const activeCollection = activeCollectionSlug
     ? collections.find((c) => c.slug === activeCollectionSlug)
@@ -70,11 +66,6 @@ export function Sidebar({
       if (activeFolder) return new Set([activeFolder.id])
     }
     if (activeCollection?.folder_id) return new Set([activeCollection.folder_id])
-    return new Set<string>()
-  })
-
-  const [expandedCollectionIds, setExpandedCollectionIds] = useState<Set<string>>(() => {
-    if (activeCollection) return new Set([activeCollection.id])
     return new Set<string>()
   })
 
@@ -106,15 +97,6 @@ export function Sidebar({
     })
   }
 
-  const toggleCollection = (id: string) => {
-    setExpandedCollectionIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/auth/signin')
@@ -131,29 +113,12 @@ export function Sidebar({
 
   const renderCollection = (collection: Collection) => {
     const collectionPath = `/dashboard/collections/${collection.slug}`
-    const isExpanded = expandedCollectionIds.has(collection.id)
-    const isCollectionActive = activeCollectionSlug === collection.slug && !activeTag
-    const tags = tagsByCollection[collection.id] || []
-    const hasTags = tags.length > 0
+    const isCollectionActive = activeCollectionSlug === collection.slug
 
     return (
       <div key={collection.id}>
         <div className="flex items-center">
-          {hasTags ? (
-            <button
-              type="button"
-              onClick={() => toggleCollection(collection.id)}
-              className="shrink-0 p-0.5 text-[#737373] hover:text-[#a0a0a0]"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-            </button>
-          ) : (
-            <span className="shrink-0 w-[20px]" />
-          )}
+          <span className="shrink-0 w-[20px]" />
           <Link href={collectionPath} className="flex-1 min-w-0">
             <div
               className={cn(
@@ -167,29 +132,6 @@ export function Sidebar({
             </div>
           </Link>
         </div>
-        {isExpanded && hasTags && (
-          <div className="ml-7 space-y-0.5 border-l border-[#2a2a2a] pl-2 py-1">
-            {tags.slice(0, 5).map((tag) => {
-              const tagPath = `${collectionPath}?tag=${encodeURIComponent(tag)}`
-              const isTagActive =
-                activeCollectionSlug === collection.slug && activeTag === tag
-              return (
-                <Link key={tag} href={tagPath}>
-                  <div
-                    className={cn(
-                      'px-2 py-1 text-xs transition-colors',
-                      isTagActive
-                        ? 'border-l-2 border-[#60a5fa] bg-[#1a1a1a] pl-[10px] text-[#e5e5e5] -ml-[2px]'
-                        : 'text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-[#e5e5e5]'
-                    )}
-                  >
-                    {tag}
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
       </div>
     )
   }

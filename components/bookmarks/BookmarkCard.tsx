@@ -1,6 +1,5 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -34,41 +33,7 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
         rel="noopener noreferrer"
         className="block"
       >
-        {/* Thumbnail area */}
-        <div className="aspect-video bg-[#0f0f0f] relative flex items-center justify-center overflow-hidden">
-          {bookmark.og_image ? (
-            <Image
-              src={bookmark.og_image}
-              alt={bookmark.title || domain}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-[#3a3a3a]">
-              {bookmark.favicon_url && (
-                <div className="relative w-16 h-16">
-                  <Image
-                    src={bookmark.favicon_url}
-                    alt={domain}
-                    fill
-                    className="object-contain opacity-20"
-                    unoptimized
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Category badge - top left */}
-          {collection && (
-            <div className={`absolute top-0 left-0 px-2 py-1 text-[10px] font-medium tracking-wider ${categoryColor} text-white`}>
-              {categoryLabel}
-            </div>
-          )}
-
-          {/* More menu - top right */}
-          <div className="absolute top-2 right-2">
+          {/* <div className="absolute top-2 right-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -112,8 +77,7 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
+          </div> */}
       </a>
 
       {/* Content section */}
@@ -154,28 +118,6 @@ export function BookmarkCard({ bookmark, collection, onDelete, onEdit }: Bookmar
           <ExternalLinkIcon className="h-4 w-4" />
         </a>
 
-        {/* Tags */}
-        {/* {bookmark.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {bookmark.tags.slice(0, 4).map((tag) => (
-              <Badge 
-                key={tag} 
-                variant="secondary" 
-                className="text-[10px] px-2 py-0.5 bg-[#2a2a2a] text-[#a0a0a0] border-0 hover:bg-[#3a3a3a]"
-              >
-                {tag}
-              </Badge>
-            ))}
-            {bookmark.tags.length > 4 && (
-              <Badge 
-                variant="secondary" 
-                className="text-[10px] px-2 py-0.5 bg-[#2a2a2a] text-[#a0a0a0] border-0"
-              >
-                +{bookmark.tags.length - 4}
-              </Badge>
-            )}
-          </div>
-        )} */}
       </div>
     </div>
   )

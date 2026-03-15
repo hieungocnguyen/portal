@@ -5,12 +5,10 @@ import type { Bookmark, Collection, Folder } from '@/lib/types'
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ tag?: string }>
 }
 
-export default async function CollectionPage({ params, searchParams }: PageProps) {
+export default async function CollectionPage({ params }: PageProps) {
   const { slug } = await params
-  const { tag } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -32,17 +30,11 @@ export default async function CollectionPage({ params, searchParams }: PageProps
     notFound()
   }
 
-  let bookmarksQuery = supabase
+  const { data: bookmarks } = await supabase
     .from('bookmarks')
     .select('*')
     .eq('collection_id', collection.id)
     .order('created_at', { ascending: false })
-
-  if (tag) {
-    bookmarksQuery = bookmarksQuery.contains('tags', [tag])
-  }
-
-  const { data: bookmarks } = await bookmarksQuery
 
   const { data: collections } = await supabase
     .from('collections')
@@ -83,7 +75,6 @@ export default async function CollectionPage({ params, searchParams }: PageProps
       initialBookmarks={(bookmarks as Bookmark[]) || []}
       collections={(collections as Collection[]) || []}
       folders={(folders as Folder[]) || []}
-      activeTag={tag}
     />
   )
 }

@@ -21,7 +21,6 @@ type BookmarkPageClientProps = {
   initialBookmarks: Bookmark[]
   collections: Collection[]
   folders: Folder[]
-  activeTag?: string
 }
 
 export function BookmarkPageClient({
@@ -31,7 +30,6 @@ export function BookmarkPageClient({
   initialBookmarks,
   collections,
   folders,
-  activeTag,
 }: BookmarkPageClientProps) {
   const [bookmarks, setBookmarks] = useState(initialBookmarks)
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,32 +38,23 @@ export function BookmarkPageClient({
   const supabase = createClient()
 
   const filteredBookmarks = useMemo(() => {
-    let filtered = bookmarks
-
-    if (activeTag) {
-      filtered = filtered.filter((b) => b.tags.includes(activeTag))
-    }
-
-    if (!searchQuery) return filtered
+    if (!searchQuery) return bookmarks
 
     const query = searchQuery.toLowerCase()
-    return filtered.filter((bookmark) => {
+    return bookmarks.filter((bookmark) => {
       const titleMatch = bookmark.title?.toLowerCase().includes(query)
       const urlMatch = bookmark.url.toLowerCase().includes(query)
       const descMatch = bookmark.description?.toLowerCase().includes(query)
-      const tagMatch = bookmark.tags.some((tag) => tag.toLowerCase().includes(query))
-      return titleMatch || urlMatch || descMatch || tagMatch
+      return titleMatch || urlMatch || descMatch
     })
-  }, [bookmarks, searchQuery, activeTag])
+  }, [bookmarks, searchQuery])
 
   const handleAddBookmark = async (data: {
     url: string
     title: string
     description: string
     collection_id: string | null
-    tags: string[]
     favicon_url: string | null
-    og_image: string | null
   }) => {
     const {
       data: { user },
@@ -84,9 +73,7 @@ export function BookmarkPageClient({
         title: data.title || null,
         description: data.description || null,
         collection_id: data.collection_id,
-        tags: data.tags,
         favicon_url: data.favicon_url,
-        og_image: data.og_image,
       })
       .select()
       .single()

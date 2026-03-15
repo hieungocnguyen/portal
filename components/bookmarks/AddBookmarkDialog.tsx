@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo, useEffect, useRef } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import Image from 'next/image'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
 import { CreateFolderDialog } from '@/components/folders/CreateFolderDialog'
 import { CreateCollectionDialog } from '@/components/collections/CreateCollectionDialog'
@@ -29,9 +29,7 @@ type AddBookmarkDialogProps = {
     title: string
     description: string
     collection_id: string | null
-    tags: string[]
     favicon_url: string | null
-    og_image: string | null
   }) => Promise<void>
   onRefresh?: () => void
 }
@@ -52,15 +50,13 @@ export function AddBookmarkDialog({
   const [description, setDescription] = useState('')
   const [folderId, setFolderId] = useState<string>('')
   const [collectionId, setCollectionId] = useState<string>('')
-  const [tags, setTags] = useState('')
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
-  const [ogImage, setOgImage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isFetching, setIsFetching] = useState(false)
+  const [metaFetched, setMetaFetched] = useState(false)
   const [showCreateFolder, setShowCreateFolder] = useState(false)
   const [showCreateCollection, setShowCreateCollection] = useState(false)
   const supabase = createClient()
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const filteredCollections = useMemo(() => {
     if (!folderId) return []
@@ -76,18 +72,18 @@ export function AddBookmarkDialog({
     }
   }
 
-  const handleFetchMeta = async (urlToFetch: string) => {
-    if (!urlToFetch || !isValidUrl(urlToFetch)) return
+  const handleFetchMeta = async () => {
+    if (!url || !isValidUrl(url)) return
 
     setIsFetching(true)
     try {
-      const res = await fetch(`/api/fetch-meta?url=${encodeURIComponent(urlToFetch)}`)
+      const res = await fetch(`/api/fetch-meta?url=${encodeURIComponent(url)}`)
       const data: UrlMeta = await res.json()
 
-      if (data.title) setTitle(data.title)
-      if (data.description) setDescription(data.description)
+      setTitle(data.title ?? '')
+      setDescription(data.description ?? '')
       setFaviconUrl(data.favicon_url)
-      setOgImage(data.og_image)
+      setMetaFetched(true)
     } catch (error) {
       console.error('Failed to fetch metadata:', error)
     } finally {
@@ -95,35 +91,14 @@ export function AddBookmarkDialog({
     }
   }
 
-  useEffect(() => {
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current)
-    }
-
-    if (!url || !isValidUrl(url)) {
-      return
-    }
-
-    fetchTimeoutRef.current = setTimeout(() => {
-      handleFetchMeta(url)
-    }, 800)
-
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current)
-      }
-    }
-  }, [url])
-
   const reset = () => {
     setUrl('')
     setTitle('')
     setDescription('')
     setFolderId('')
     setCollectionId('')
-    setTags('')
     setFaviconUrl(null)
-    setOgImage(null)
+    setMetaFetched(false)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -205,9 +180,7 @@ export function AddBookmarkDialog({
         title,
         description,
         collection_id: finalCollectionId || null,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         favicon_url: faviconUrl,
-        og_image: ogImage,
       })
 
       setOpen(false)
@@ -237,51 +210,94 @@ export function AddBookmarkDialog({
                 <Label htmlFor="url" className="text-[#e5e5e5]">
                   URL
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="url"
-                    type="url"
-                    placeholder="https://example.com"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    required
-                    className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5]"
-                  />
-                  {isFetching && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="animate-spin h-4 w-4 border-2 border-[#3a5ff5] border-t-transparent rounded-full" />
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="url"
+                      type="url"
+                      placeholder="https://example.com"
+                      value={url}
+                      onChange={(e) => {
+                        setUrl(e.target.value)
+                        setMetaFetched(false)
+                      }}
+                      required
+                      className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5] pr-3"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    disabled={!isValidUrl(url) || isFetching}
+                    onClick={handleFetchMeta}
+                    title="Fetch page info"
+                    className="shrink-0 bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5] hover:bg-[#1a1a1a] hover:text-[#3a5ff5] disabled:opacity-40"
+                  >
+                    <RefreshCw
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        isFetching && 'animate-spin'
+                      )}
+                      style={{ animationDirection: 'normal' }}
+                    />
+                  </Button>
                 </div>
               </div>
 
-              {/* Preview thumbnail + favicon after fetch */}
-              {(ogImage || faviconUrl) && (
-                <div className="relative overflow-hidden border border-[#2a2a2a] h-36 bg-[#0f0f0f] flex items-center justify-center">
-                  {ogImage ? (
-                    <Image
-                      src={ogImage}
-                      alt="Site thumbnail"
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <span className="text-[#606060] text-xs">No thumbnail</span>
-                  )}
-                  {faviconUrl && (
-                    <div className="absolute bottom-2 left-2 w-8 h-8 bg-[#1a1a1a]/80 backdrop-blur p-1 flex items-center justify-center">
-                      <Image
-                        src={faviconUrl}
-                        alt="Site favicon"
-                        width={24}
-                        height={24}
-                        className="object-contain"
-                        unoptimized
-                      />
+              {metaFetched && (
+                <>
+                  <div className="grid gap-2">
+                    <Label className="text-[#e5e5e5]">Icon</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#2a2a2a] bg-[#0f0f0f]">
+                        {faviconUrl ? (
+                          <img
+                            src={faviconUrl}
+                            alt=""
+                            className="h-5 w-5 rounded-sm object-contain"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = 'none'
+                            }}
+                          />
+                        ) : (
+                          <div className="h-5 w-5 rounded-sm bg-[#2a2a2a]" />
+                        )}
+                      </div>
+                      <p className="text-xs text-[#737373]">
+                        Custom icon upload coming soon
+                      </p>
                     </div>
-                  )}
-                </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="title" className="text-[#e5e5e5]">
+                      Title
+                    </Label>
+                    <Input
+                      id="title"
+                      type="text"
+                      placeholder="Page title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5]"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="description" className="text-[#e5e5e5]">
+                      Description
+                    </Label>
+                    <textarea
+                      id="description"
+                      placeholder="Page description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-md border border-[#2a2a2a] bg-[#0f0f0f] px-3 py-2 text-sm text-[#e5e5e5] placeholder:text-[#737373] resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3a5ff5]"
+                    />
+                  </div>
+                </>
               )}
 
               <div className="grid gap-2">
@@ -351,18 +367,6 @@ export function AddBookmarkDialog({
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="tags" className="text-[#e5e5e5]">
-                  Tags
-                </Label>
-                <Input
-                  id="tags"
-                  placeholder="design, inspiration, reference (comma-separated)"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5]"
-                />
-              </div>
             </div>
 
             <DialogFooter>

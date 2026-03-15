@@ -22,7 +22,6 @@ export default async function DashboardLayout({
     { data: collections },
     { data: folders },
     { data: profile },
-    { data: bookmarks },
   ] = await Promise.all([
     supabase
       .from('collections')
@@ -35,24 +34,7 @@ export default async function DashboardLayout({
       .eq('user_id', user.id)
       .order('created_at', { ascending: true }),
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase
-      .from('bookmarks')
-      .select('collection_id, tags')
-      .eq('user_id', user.id),
   ])
-
-  // Build tags per collection for nested sidebar items
-  const tagsByCollection: Record<string, string[]> = {}
-  for (const c of (collections as Collection[]) || []) {
-    tagsByCollection[c.id] = []
-  }
-  for (const b of (bookmarks as { collection_id: string | null; tags: string[] }[]) || []) {
-    if (b.collection_id && b.tags?.length) {
-      const existing = tagsByCollection[b.collection_id] || []
-      const merged = [...new Set([...existing, ...b.tags])]
-      tagsByCollection[b.collection_id] = merged.slice(0, 5)
-    }
-  }
 
   const avatarUrl =
     (profile as Profile | null)?.avatar_url ??
@@ -70,7 +52,6 @@ export default async function DashboardLayout({
       <Sidebar
         folders={(folders as Folder[]) || []}
         collections={(collections as Collection[]) || []}
-        tagsByCollection={tagsByCollection}
         userEmail={user.email || ''}
         avatarUrl={avatarUrl}
         fullName={fullName}

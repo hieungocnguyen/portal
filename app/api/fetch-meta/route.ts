@@ -26,18 +26,6 @@ export async function GET(request: NextRequest) {
       $('meta[name="description"]').attr('content') ||
       null
 
-    // OG image for thumbnail
-    let og_image =
-      $('meta[property="og:image"]').attr('content') ||
-      $('meta[name="twitter:image"]').attr('content') ||
-      null
-
-    if (og_image && !og_image.startsWith('http')) {
-      og_image = og_image.startsWith('/')
-        ? `${origin}${og_image}`
-        : `${origin}/${og_image}`
-    }
-
     // Favicon — try multiple selectors in priority order
     let favicon_url =
       $('link[rel="apple-touch-icon"]').attr('href') ||
@@ -57,14 +45,13 @@ export async function GET(request: NextRequest) {
       favicon_url = `${origin}/favicon.ico`
     }
 
-    return NextResponse.json({ title, description, favicon_url, og_image })
+    return NextResponse.json({ title, description, favicon_url })
   } catch (error) {
     console.error('Failed to fetch metadata:', error)
     return NextResponse.json({
       title: null,
       description: null,
       favicon_url: null,
-      og_image: null,
     })
   }
 }
