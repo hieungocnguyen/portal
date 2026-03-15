@@ -16,17 +16,20 @@ import { createClient } from '@/utils/supabase/client'
 import { slugify } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 import { toast } from 'sonner'
+import type { Collection } from '@/lib/types'
 
 type CreateCollectionDialogProps = {
   folderId: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCreated?: (collection: Collection) => void
 }
 
 export function CreateCollectionDialog({
   folderId,
   open,
   onOpenChange,
+  onCreated,
 }: CreateCollectionDialogProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -56,13 +59,17 @@ export function CreateCollectionDialog({
         .maybeSingle()
       if (existing) slug = `${slug}-${nanoid(4)}`
 
-      const { error } = await supabase.from('collections').insert({
-        user_id: user.id,
-        name: name.trim(),
-        description: description.trim() || null,
-        folder_id: folderId,
-        slug,
-      })
+      const { data: newCollection, error } = await supabase
+        .from('collections')
+        .insert({
+          user_id: user.id,
+          name: name.trim(),
+          description: description.trim() || null,
+          folder_id: folderId,
+          slug,
+        })
+        .select()
+        .single()
 
       if (error) {
         toast.error('Failed to create collection')
@@ -73,6 +80,7 @@ export function CreateCollectionDialog({
       setName('')
       setDescription('')
       onOpenChange(false)
+      onCreated?.(newCollection)
       router.refresh()
     })
   }
@@ -98,7 +106,7 @@ export function CreateCollectionDialog({
                 className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5] placeholder:text-[#505050]"
               />
             </div>
-            <div className="space-y-1.5">
+            {/* <div className="space-y-1.5">
               <Label htmlFor="collection-desc" className="text-[#a0a0a0] text-xs uppercase tracking-wider">
                 Description <span className="text-[#505050]">(optional)</span>
               </Label>
@@ -109,7 +117,7 @@ export function CreateCollectionDialog({
                 placeholder="Brief description"
                 className="bg-[#0f0f0f] border-[#2a2a2a] text-[#e5e5e5] placeholder:text-[#505050]"
               />
-            </div>
+            </div> */}
           </div>
           <DialogFooter className="mt-4">
             <Button

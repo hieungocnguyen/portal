@@ -396,6 +396,11 @@ export function AddBookmarkDialog({
           setShowCreateFolder(open)
           if (!open && onRefresh) onRefresh()
         }}
+        onCreated={(folder) => {
+          setFolderId(folder.id)
+          setCollectionId('')
+          onRefresh?.()
+        }}
       />
 
       <CreateCollectionDialog
@@ -404,6 +409,10 @@ export function AddBookmarkDialog({
         onOpenChange={(open) => {
           setShowCreateCollection(open)
           if (!open && onRefresh) onRefresh()
+        }}
+        onCreated={(collection) => {
+          setCollectionId(collection.id)
+          onRefresh?.()
         }}
       />
     </>

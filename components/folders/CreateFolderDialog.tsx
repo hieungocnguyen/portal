@@ -16,13 +16,15 @@ import { createClient } from '@/utils/supabase/client'
 import { slugify } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 import { toast } from 'sonner'
+import type { Folder } from '@/lib/types'
 
 type CreateFolderDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCreated?: (folder: Folder) => void
 }
 
-export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogProps) {
+export function CreateFolderDialog({ open, onOpenChange, onCreated }: CreateFolderDialogProps) {
   const [name, setName] = useState('')
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -50,9 +52,11 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
         .maybeSingle()
       if (existing) slug = `${slug}-${nanoid(4)}`
 
-      const { error } = await supabase
+      const { data: newFolder, error } = await supabase
         .from('folders')
         .insert({ user_id: user.id, name: name.trim(), slug })
+        .select()
+        .single()
 
       if (error) {
         toast.error('Failed to create folder')
@@ -62,6 +66,7 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
       toast.success('Folder created')
       setName('')
       onOpenChange(false)
+      onCreated?.(newFolder)
       router.refresh()
     })
   }
