@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ export function CreateCollectionDialog({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const supabase = createClient()
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -81,7 +81,7 @@ export function CreateCollectionDialog({
       setDescription('')
       onOpenChange(false)
       onCreated?.(newCollection)
-      router.refresh()
+      queryClient.invalidateQueries({ queryKey: ['collections', user.id] })
     })
   }
 

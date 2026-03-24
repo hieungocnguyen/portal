@@ -39,7 +39,7 @@ export const createClient = async (request: NextRequest) => {
   } = await supabase.auth.getUser();
 
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
 
   return supabaseResponse;

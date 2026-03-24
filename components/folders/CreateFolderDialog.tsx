@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ type CreateFolderDialogProps = {
 export function CreateFolderDialog({ open, onOpenChange, onCreated }: CreateFolderDialogProps) {
   const [name, setName] = useState('')
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const supabase = createClient()
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,7 +67,7 @@ export function CreateFolderDialog({ open, onOpenChange, onCreated }: CreateFold
       setName('')
       onOpenChange(false)
       onCreated?.(newFolder)
-      router.refresh()
+      queryClient.invalidateQueries({ queryKey: ['folders', user.id] })
     })
   }
 

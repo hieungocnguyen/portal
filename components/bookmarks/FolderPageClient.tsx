@@ -5,27 +5,36 @@ import { BookmarkGrid } from '@/components/bookmarks/BookmarkGrid'
 import { AddBookmarkDialog } from '@/components/bookmarks/AddBookmarkDialog'
 import { Header } from '@/components/layout/Header'
 import {
-  useBookmarks,
   useCollections,
   useFolders,
+  useBookmarksByCollectionIds,
   useAddBookmark,
   useDeleteBookmark,
   useInvalidateCollections,
   useInvalidateFolders,
 } from '@/lib/queries'
+import type { Folder } from '@/lib/types'
 import { toast } from 'sonner'
 
-type DashboardPageClientProps = {
+type FolderPageClientProps = {
   userId: string
+  folder: Folder
 }
 
-export function DashboardPageClient({ userId }: DashboardPageClientProps) {
+export function FolderPageClient({ userId, folder }: FolderPageClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddDialog, setShowAddDialog] = useState(false)
 
-  const { data: bookmarks = [], isLoading: bookmarksLoading } = useBookmarks(userId)
-  const { data: collections = [] } = useCollections(userId)
+  const { data: allCollections = [] } = useCollections(userId)
   const { data: folders = [] } = useFolders(userId)
+
+  const folderCollectionIds = useMemo(
+    () => allCollections.filter((c) => c.folder_id === folder.id).map((c) => c.id),
+    [allCollections, folder.id]
+  )
+
+  const { data: bookmarks = [], isLoading: bookmarksLoading } =
+    useBookmarksByCollectionIds(userId, folderCollectionIds)
 
   const invalidateCollections = useInvalidateCollections()
   const invalidateFolders = useInvalidateFolders()
@@ -80,7 +89,7 @@ export function DashboardPageClient({ userId }: DashboardPageClientProps) {
   return (
     <div className="flex flex-col h-full">
       <Header
-        breadcrumbs={[]}
+        breadcrumbs={[{ label: folder.name.toUpperCase() }]}
         onSearch={setSearchQuery}
         onNewClick={() => setShowAddDialog(true)}
       />
@@ -89,9 +98,9 @@ export function DashboardPageClient({ userId }: DashboardPageClientProps) {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#e5e5e5] tracking-tight mb-1">
-              ALL BOOKMARKS
+              {folder.name.toUpperCase()}
             </h1>
-            <p className="text-sm text-[#606060]">All your bookmarks in one place.</p>
+            <p className="text-sm text-[#606060]">All bookmarks in {folder.name}</p>
           </div>
           <div className="text-sm text-[#606060] font-medium mt-1">
             {bookmarksLoading ? '..._ITEMS' : `${filteredBookmarks.length}_ITEMS`}
@@ -100,7 +109,7 @@ export function DashboardPageClient({ userId }: DashboardPageClientProps) {
 
         <BookmarkGrid
           bookmarks={filteredBookmarks}
-          collections={collections}
+          collections={allCollections}
           isLoading={bookmarksLoading}
           onDelete={handleDeleteBookmark}
         />
@@ -108,7 +117,7 @@ export function DashboardPageClient({ userId }: DashboardPageClientProps) {
 
       <AddBookmarkDialog
         folders={folders}
-        collections={collections}
+        collections={allCollections}
         onAdd={handleAddBookmark}
         open={showAddDialog}
         onOpenChange={setShowAddDialog}

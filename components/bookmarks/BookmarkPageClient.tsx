@@ -1,45 +1,41 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { BookmarkGrid } from '@/components/bookmarks/BookmarkGrid'
 import { AddBookmarkDialog } from '@/components/bookmarks/AddBookmarkDialog'
 import { Header } from '@/components/layout/Header'
-import { createClient } from '@/utils/supabase/client'
-import type { Bookmark, Collection, Folder } from '@/lib/types'
+import {
+  useBookmarks,
+  useCollections,
+  useFolders,
+  useAddBookmark,
+  useDeleteBookmark,
+  useInvalidateCollections,
+  useInvalidateFolders,
+} from '@/lib/queries'
+import type { Collection } from '@/lib/types'
 import { toast } from 'sonner'
 
-type Breadcrumb = {
-  label: string
-  href?: string
-}
-
 type BookmarkPageClientProps = {
-  title: string
-  subtitle: string
-  breadcrumbs: Breadcrumb[]
-  initialBookmarks: Bookmark[]
-  collections: Collection[]
-  folders: Folder[]
+  userId: string
+  collection: Collection
 }
 
-export function BookmarkPageClient({
-  title,
-  subtitle,
-  breadcrumbs,
-  initialBookmarks,
-  collections,
-  folders,
-}: BookmarkPageClientProps) {
-  const [bookmarks, setBookmarks] = useState(initialBookmarks)
+export function BookmarkPageClient({ userId, collection }: BookmarkPageClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+
+  const { data: bookmarks = [], isLoading: bookmarksLoading } = useBookmarks(userId, collection.id)
+  const { data: collections = [] } = useCollections(userId)
+  const { data: folders = [] } = useFolders(userId)
+
+  const invalidateCollections = useInvalidateCollections()
+  const invalidateFolders = useInvalidateFolders()
+  const addBookmark = useAddBookmark()
+  const deleteBookmark = useDeleteBookmark()
 
   const filteredBookmarks = useMemo(() => {
     if (!searchQuery) return bookmarks
-
     const query = searchQuery.toLowerCase()
     return bookmarks.filter((bookmark) => {
       const titleMatch = bookmark.title?.toLowerCase().includes(query)
@@ -56,56 +52,36 @@ export function BookmarkPageClient({
     collection_id: string | null
     favicon_url: string | null
   }) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      toast.error('You must be logged in to add bookmarks')
-      return
-    }
-
-    const { data: newBookmark, error } = await supabase
-      .from('bookmarks')
-      .insert({
-        user_id: user.id,
+    await addBookmark.mutateAsync(
+      {
+        userId,
         url: data.url,
         title: data.title || null,
         description: data.description || null,
         collection_id: data.collection_id,
         favicon_url: data.favicon_url,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      toast.error('Failed to add bookmark')
-      console.error(error)
-      return
-    }
-
-    setBookmarks([newBookmark as Bookmark, ...bookmarks])
-    toast.success('Bookmark added successfully')
-    router.refresh()
+      },
+      {
+        onSuccess: () => toast.success('Bookmark added successfully'),
+        onError: () => toast.error('Failed to add bookmark'),
+      }
+    )
+    setShowAddDialog(false)
   }
 
   const handleDeleteBookmark = async (id: string) => {
-    const { error } = await supabase.from('bookmarks').delete().eq('id', id)
-
-    if (error) {
-      toast.error('Failed to delete bookmark')
-      console.error(error)
-      return
-    }
-
-    setBookmarks(bookmarks.filter((b) => b.id !== id))
-    toast.success('Bookmark deleted')
-    router.refresh()
+    await deleteBookmark.mutateAsync(
+      { id, userId },
+      {
+        onSuccess: () => toast.success('Bookmark deleted'),
+        onError: () => toast.error('Failed to delete bookmark'),
+      }
+    )
   }
 
-  const handleEditBookmark = (_bookmark: Bookmark) => {
-    toast.info('Edit functionality coming soon')
-  }
+  const breadcrumbs: Array<{ label: string; href?: string }> = [
+    { label: collection.name.toUpperCase() },
+  ]
 
   return (
     <div className="flex flex-col h-full">
@@ -119,22 +95,22 @@ export function BookmarkPageClient({
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#e5e5e5] tracking-tight mb-1">
-              {title}
+              {collection.name.toUpperCase()}
             </h1>
-            <p className="text-sm text-[#606060]">{subtitle}</p>
+            <p className="text-sm text-[#606060]">
+              {collection.description || `All bookmarks in ${collection.name}`}
+            </p>
           </div>
-          <div className="">
-            <div className="text-sm text-[#606060] font-medium mt-1">
-              {filteredBookmarks.length}_ITEMS
-            </div>
+          <div className="text-sm text-[#606060] font-medium mt-1">
+            {bookmarksLoading ? '..._ITEMS' : `${filteredBookmarks.length}_ITEMS`}
           </div>
         </div>
 
         <BookmarkGrid
           bookmarks={filteredBookmarks}
           collections={collections}
+          isLoading={bookmarksLoading}
           onDelete={handleDeleteBookmark}
-          onEdit={handleEditBookmark}
         />
       </div>
 
@@ -144,7 +120,10 @@ export function BookmarkPageClient({
         onAdd={handleAddBookmark}
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onRefresh={() => router.refresh()}
+        onRefresh={() => {
+          invalidateCollections(userId)
+          invalidateFolders(userId)
+        }}
       />
     </div>
   )
