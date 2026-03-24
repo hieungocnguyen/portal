@@ -1,10 +1,13 @@
 import HeroGrid from "@/components/hero";
-import Link from "next/link";
+import { getUser } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <>
-        <HeroGrid />
-    </>
-  );
+export default async function Home() {
+  const user = await getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return <HeroGrid />;
 }

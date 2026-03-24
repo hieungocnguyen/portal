@@ -72,7 +72,7 @@ const HeroGrid = () => {
                 </div>
             </div>
             <div className="absolute flex flex-col items-center justify-center gap-8 p-6 text-center">
-                <h1 className="text-5xl font-bold tracking-tight text-foreground">
+                <h1 className="text-5xl font-bold tracking-tight text-white">
                     Portal
                 </h1>
                 <p className="max-w-md text-lg text-muted-foreground">
