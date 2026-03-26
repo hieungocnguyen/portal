@@ -18,7 +18,7 @@ export default async function CollectionPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: collection, error } = await supabase
     .from('collections')
-    .select('id, name, description, slug, folder_id')
+    .select('id, name, description, slug, is_public, folder_id')
     .eq('slug', slug)
     .eq('user_id', user.id)
     .single()

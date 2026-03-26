@@ -639,17 +639,17 @@ toast.success('Bookmark saved!')
 ## Definition of Done — Per Phase
 
 ### Phase 1
-- [ ] User can sign up, log in (email + Google), log out
-- [ ] User can view all their bookmarks in a grid
-- [ ] User can add a bookmark by pasting a URL; title/description/favicon auto-fill
-- [ ] User can create collections and assign bookmarks to them
+- [X] User can sign up, log in (email + Google), log out
+- [X] User can view all their bookmarks in a grid
+- [X] User can add a bookmark by pasting a URL; title/description/favicon auto-fill
+- [X] User can create collections and assign bookmarks to them
 - [ ] User can tag bookmarks and filter by tag
 - [ ] Search filters bookmarks in real-time
 
 ### Phase 2
-- [ ] Collection can be toggled public/private
-- [ ] Public collection gets a unique `/share/{slug}` URL
-- [ ] `/share/{slug}` is accessible without login and renders with SSR
+- [X] Collection can be toggled public/private
+- [X] Public collection gets a unique `/share/{slug}` URL
+- [X] `/share/{slug}` is accessible without login and renders with SSR
 
 ### Phase 3
 - [ ] Extension popup shows current tab URL

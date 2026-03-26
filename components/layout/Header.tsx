@@ -7,18 +7,18 @@ import Link from 'next/link'
 
 type HeaderProps = {
   breadcrumbs?: { label: string; href?: string }[]
-  onSearch?: (query: string) => void
   onNewClick?: () => void
+  onSearch?: (query: string) => void
 }
 
 export function Header({
   breadcrumbs = [],
-  onSearch,
-  onNewClick
+  onNewClick,
+  onSearch
 }: HeaderProps) {
   return (
     <header className="px-8 py-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
         {/* Breadcrumb */}
         {breadcrumbs.length > 0 && (
           <div className="flex items-center gap-2 text-xs">
@@ -45,11 +45,11 @@ export function Header({
         )}
 
         {/* Right side controls */}
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3">
           {/* Search Bar */}
           {/* <div className="flex-1 max-w-md">
             <SearchBar onSearch={onSearch} />
-          </div> */}
+          </div>
 
           {/* NEW button */}
           <Button

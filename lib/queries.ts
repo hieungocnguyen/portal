@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import type { Bookmark, Collection, Folder } from '@/lib/types'
+import { nanoid } from 'nanoid'
 
 export const queryKeys = {
   collections: (userId: string) => ['collections', userId] as const,
@@ -162,4 +163,56 @@ export function useInvalidateFolders() {
   const queryClient = useQueryClient()
   return (userId: string) =>
     queryClient.invalidateQueries({ queryKey: queryKeys.folders(userId) })
+}
+
+type ToggleCollectionPublicInput = {
+  collectionId: string
+  makePublic: boolean
+  currentSlug?: string | null
+}
+
+export function useToggleCollectionPublic(userId: string) {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      collectionId,
+      makePublic,
+      currentSlug,
+    }: ToggleCollectionPublicInput) => {
+      if (!userId) throw new Error('userId is required')
+
+      const updates: Partial<Pick<Collection, 'is_public' | 'slug'>> = {
+        is_public: makePublic,
+      }
+      if (makePublic) {
+        const normalizedSlug =
+          typeof currentSlug === 'string' && currentSlug.trim().length > 0
+            ? currentSlug
+            : null
+        updates.slug = normalizedSlug ?? nanoid(8)
+      }
+
+      const { data: updatedCollection, error } = await supabase
+        .from('collections')
+        .update(updates)
+        .eq('id', collectionId)
+        .eq('user_id', userId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return updatedCollection as Collection
+    },
+    onSuccess: (updatedCollection) => {
+      queryClient.setQueryData(
+        queryKeys.collections(userId),
+        (prev: Collection[] | undefined) => {
+          if (!prev) return prev
+          return prev.map((c) => (c.id === updatedCollection.id ? updatedCollection : c))
+        }
+      )
+    },
+  })
 }
