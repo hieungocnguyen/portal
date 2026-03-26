@@ -14,5 +14,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/auth/signin?error=auth_callback_error`);
+  return NextResponse.redirect(`${origin}/auth/signin?error=auth_callback_error?code=${code}`);
 }
